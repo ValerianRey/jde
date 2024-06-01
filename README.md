@@ -1,8 +1,15 @@
 # Jacobian Descent Experiments
-This repository contains deep learning experiments on benchmarking tasks. It compares
-single-objective optimization to some multi-objective approaches. Multi-objective
-optimization is performed via jacobian descent, using the library
-[torchjd](https://github.com/ValerianRey/torchjd).
+
+This repository contains deep learning experiments on benchmarking tasks. Multi-objective
+optimization is performed via jacobian descent, using an early version of the library 
+[torchjd](https://github.com/TorchJD/torchjd).
+
+> [!WARNING]
+> The purpose of this repository is to reproduce or extend the experiments of our paper.
+> Since it uses an outdated version of torchjd, it is not a good resource to start learning how to
+> use this library. For the same reason, it is not the best way to learn how to train neural networks
+> with Jacobian descent. Instead, we recommend reading the documentation of
+> [torchjd](https://github.com/TorchJD/torchjd).
 
 # Installation
 The installation steps are given for Linux (more specifically, they have been tested on recent
@@ -46,8 +53,10 @@ operating systems.
 
    > 💡 The python version that you should specify in your IDE is `path_to_jde/.venv/bin/python`.
 
-5) We use Weights and Biases to monitor the runs (losses, metrics and more). In order to use
-it, you have to create an account on https://wandb.ai/home.
+5) We use Weights and Biases to monitor the runs (losses, metrics and more). In order to reproduce
+our experiments, you have to create an account at https://wandb.ai/home. You should then create a team
+that you can name however you want, and a project that you should name "jde".
+In `src/scripts/download_study`, you have to replace "team-name" by the team name that you have chosen.
 
 6) To quickly test the install, run:
    ```bash
@@ -56,7 +65,7 @@ it, you have to create an account on https://wandb.ai/home.
    You might see some warnings and wandb should ask for some access credentials. If it works, at
    the end, you should see the message "11/11 successful experiments".
 
-# Usage
+# Explanations
 
 - A `problem` is defined mainly as a supervised dataset for which we want to train a model,
   together with a number of epochs for which we want to train. It is thus generally specified with a
@@ -69,3 +78,40 @@ it, you have to create an account on https://wandb.ai/home.
   the context of jacobian descent.
 - An `experiment` is a `(problem, solution)` pair.
 - A `study` is a collection of `experiments` whose performance are comparable.
+
+# Usage
+
+The scripts to reproduce our experiments generally take 3 parameters: 
+- The dataset key (`svhn`, `cifar10`, `euro_sat`, `mnist`, `fashion_mnist`, `kmnist`).
+- An int indicating the seed and the subset on which the experiment should run
+(we used `1`, `2`, `3`, `4`, `5`, `6`, `7`, and `8`).
+- A study version, which is used to separate the results on wandb into a different group, in case of
+problem (just use `v1`).
+
+All the commands mentioned below should be run from the root of `jde`.
+Be warned that the time required to reproduce all of our experiments on all seeds is in hundreds of
+hours.
+
+The script for the main experiments is the following:
+```bash
+   ./src/scripts/study_pipeline.sh dataset_key seed version
+```
+For instance, to obtain the results for `cifar10` on the first seed / subset, you have to run:
+```bash
+   ./src/scripts/study_pipeline.sh cifar10 1 v1
+```
+This will run the full pipeline, including the learning-rate selection, for all aggregators.
+
+To run the batch size study for `cifar10` on the first seed / subset, you have to use the following
+scripts:
+```bash
+   ./src/scripts/study_pipeline_4.sh cifar10 1 v1
+   ./src/scripts/study_pipeline_16.sh cifar10 1 v1
+   ./src/scripts/study_pipeline_64.sh cifar10 1 v1
+```
+
+To run the Adam study on `cifar10` and `svhn` on the first seed / subset, you have to run:
+```bash
+   ./src/scripts/study_pipeline_adam_cifar10.sh 1 v1
+   ./src/scripts/study_pipeline_adam_svhn.sh 1 v1
+```
