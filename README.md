@@ -1,12 +1,12 @@
 # Jacobian Descent Experiments
 
-This repository contains deep learning experiments on benchmarking tasks. Multi-objective
-optimization is performed via jacobian descent, using an early version of the library 
+This repository contains the code to reproduce the experiments of
+[Jacobian Descent For Multi-Objective Optimization](https://arxiv.org/pdf/2406.16232).
+Multi-objective optimization is performed via jacobian descent, using an early version of the library 
 [torchjd](https://github.com/TorchJD/torchjd).
 
 > [!WARNING]
-> The purpose of this repository is to reproduce or extend the experiments of our paper.
-> Since it uses an outdated version of torchjd, it is not a good resource to start learning how to
+> Since this repo uses an outdated version of torchjd, it is not a good resource to start learning how to
 > use this library. For the same reason, it is not the best way to learn how to train neural networks
 > with Jacobian descent. Instead, we recommend reading the documentation of
 > [torchjd](https://github.com/TorchJD/torchjd).
