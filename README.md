@@ -2,8 +2,7 @@
 
 This repository contains the code to reproduce the experiments of
 [Jacobian Descent For Multi-Objective Optimization](https://arxiv.org/pdf/2406.16232).
-Multi-objective optimization is performed via jacobian descent, using an early version of the library 
-[torchjd](https://github.com/TorchJD/torchjd).
+It uses an early version of the library [torchjd](https://github.com/TorchJD/torchjd), contained in `src/torchjd`.
 
 > [!WARNING]
 > Since this repo uses an outdated version of torchjd, it is not a good resource to start learning how to
