@@ -161,7 +161,7 @@ def plot_losses(
     if log_y:
         ax.set_yscale("log")
 
-    ax.grid(color="grey", linestyle=":", linewidth=0.5)
+    ax.grid(color="silver", linewidth=0.2)
 
     key = list(group_name_to_data.keys())[0]
     data = group_name_to_data[key]
@@ -179,7 +179,7 @@ def plot_similarities(group_name_to_data: dict[str, np.ndarray], dir_, plot_id: 
 
     ax.set_ylabel("Cosine similarity")
     ax.set_xlabel("Iteration")
-    ax.grid(color="grey", linestyle=":", linewidth=0.5)
+    ax.grid(color="silver", linewidth=0.2)
     ax.autoscale(enable=True, axis="x", tight=True)
     ax.set_ylim([0, 1.05])
 
