@@ -17,7 +17,6 @@ Options:
 """
 import pickle
 
-import matplotlib
 import numpy as np
 import pandas as pd
 from docopt import docopt
@@ -47,8 +46,10 @@ NAME_TO_COLOR = {
 
 
 def main() -> None:
-    matplotlib.rcParams["pdf.fonttype"] = 42
-    matplotlib.rcParams["ps.fonttype"] = 42
+    # This seems to be the only way to make the font be Type1, which is the only font type supported
+    # by ICML. It might require installing the following packages:
+    # sudo apt-get install texlive-latex-extra texlive-fonts-recommended dvipng cm-super
+    plt.rcParams.update({"text.usetex": True})
 
     arguments = docopt(__doc__)
     study_name = arguments["<name>"]
@@ -233,7 +234,7 @@ def plot_signals(ax, group_name_to_data: dict[str, np.ndarray], alpha: float) ->
         if name in name_mapping:
             name = name_mapping[name]
 
-        name = r"$\mathcal{A}_{\text{" + str(name) + "}}$" + suffix
+        name = r"$\mathcal{A}_{\mathrm{" + str(name) + "}}$" + suffix
 
         ax.plot(
             mean_data,
