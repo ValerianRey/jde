@@ -3,15 +3,24 @@ from torchjd.aggregation import (
     IMTLG,
     MGDA,
     AlignedMTL,
+    AlignedMTLWeighting,
     CAGrad,
+    CAGradWeighting,
     DualProj,
+    DualProjWeighting,
     GradDrop,
+    IMTLGWeighting,
     Mean,
+    MeanWeighting,
+    MGDAWeighting,
     NashMTL,
     PCGrad,
+    PCGradWeighting,
     Random,
+    RandomWeighting,
     Sum,
     UPGrad,
+    UPGradWeighting,
 )
 from torchmetrics import MeanMetric, MetricCollection
 
@@ -87,6 +96,42 @@ for _agg in (
     _w = _get_weighting(_agg)
     if _w is not None:
         _w.register_forward_hook(_weighting_hook)
+
+# Gramian Weightings (for autogram engine)
+upgrad_weighting = UPGradWeighting()
+mean_weighting = MeanWeighting()
+mgda_weighting = MGDAWeighting()
+dualproj_weighting = DualProjWeighting()
+pcgrad_weighting = PCGradWeighting()
+imtlg_weighting = IMTLGWeighting()
+cagrad_0_5_weighting = CAGradWeighting(c=0.5)
+alignedm_weighting = AlignedMTLWeighting()
+rgw_weighting = RandomWeighting()
+
+for _w in (
+    upgrad_weighting,
+    mean_weighting,
+    mgda_weighting,
+    dualproj_weighting,
+    pcgrad_weighting,
+    imtlg_weighting,
+    cagrad_0_5_weighting,
+    alignedm_weighting,
+    rgw_weighting,
+):
+    _w.register_forward_hook(_weighting_hook)
+
+KEY_TO_GRAMIAN_WEIGHTING = {
+    "UPGrad Mean": upgrad_weighting,
+    "Mean": mean_weighting,
+    "PCGrad": pcgrad_weighting,
+    "MGDA": mgda_weighting,
+    "DualProj Mean": dualproj_weighting,
+    "IMTLG": imtlg_weighting,
+    "CAGrad0.5": cagrad_0_5_weighting,
+    "AlignedMTL Mean": alignedm_weighting,
+    "Random": rgw_weighting,
+}
 
 KEY_TO_AGGREGATOR = {
     "UPGrad Mean": upgrad,

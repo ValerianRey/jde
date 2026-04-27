@@ -11,7 +11,7 @@ from jde.architectures import ParameterizedModule
 from jde.criteria import Criterion
 from jde.loss_combiners import LossCombiner
 from jde.metrics import Metrics
-from jde.module_wrappers import FullJDWrapper, LossCombinationGDWrapper
+from jde.module_wrappers import FullJDWrapper, GramianJDWrapper, LossCombinationGDWrapper
 from jde.printing import dict_to_str
 
 
@@ -250,6 +250,72 @@ class JDSolution(Solution, ABC):
             self._lr_scheduler_str,
         ]
         return " - ".join(elements)
+
+
+class GramianJDSolution(Solution):
+    header_color = "cyan"
+
+    def __init__(
+        self,
+        criterion: Criterion,
+        train_batch_size: int,
+        evaluation_batch_size: int,
+        gramian_weighting: nn.Module,
+        metrics: Metrics,
+        optimizer_class: type[Optimizer],
+        optimizer_kwargs: dict,
+        architecture: type[ParameterizedModule],
+        architecture_kwargs: dict | None = None,
+        lr_scheduler_class: type[LRScheduler] | None = None,
+        lr_scheduler_kwargs: dict | None = None,
+        drop_last_batch: bool = False,
+        batch_dim: int = 0,
+    ):
+        super().__init__(
+            criterion=criterion,
+            train_batch_size=train_batch_size,
+            evaluation_batch_size=evaluation_batch_size,
+            metrics=metrics,
+            optimizer_class=optimizer_class,
+            optimizer_kwargs=optimizer_kwargs,
+            architecture=architecture,
+            architecture_kwargs=architecture_kwargs,
+            lr_scheduler_class=lr_scheduler_class,
+            lr_scheduler_kwargs=lr_scheduler_kwargs,
+            drop_last_batch=drop_last_batch,
+        )
+        self.gramian_weighting = gramian_weighting
+        self.batch_dim = batch_dim
+
+    def make_wrapper(self) -> GramianJDWrapper:  # type: ignore[override]
+        model = self._make_model()
+        return GramianJDWrapper(
+            model=model,
+            criterion=self.criterion,
+            gramian_weighting=self.gramian_weighting,
+            batch_dim=self.batch_dim,
+        )
+
+    def __str__(self) -> str:
+        elements = [
+            self._base_str,
+            str(self.gramian_weighting),
+            self._optimizer_str,
+            self._lr_scheduler_str,
+        ]
+        return " - ".join(elements)
+
+    @property
+    def config(self) -> dict[str, Any]:
+        return super().config | {
+            "gramian_weighting": str(self.gramian_weighting),
+            "gramian_weighting_repr": repr(self.gramian_weighting),
+            "batch_dim": str(self.batch_dim),
+        }
+
+    @property
+    def optimization_type(self) -> str:
+        return "GJD"
 
 
 class FullJDSolution(JDSolution):

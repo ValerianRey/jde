@@ -24,6 +24,7 @@ dependencies = [
 
 [project.scripts]
 iwrm_study = "scripts.iwrm_study:main"
+gram_study = "scripts.gram_study:main"
 speed_study = "scripts.speed_study:main"
 download_study = "scripts.download_study:main"
 refine_lr_range = "scripts.refine_lr_range:main"

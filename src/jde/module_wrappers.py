@@ -1,5 +1,6 @@
 from torch import Tensor, nn
 from torchjd.aggregation import Aggregator
+from torchjd.autogram import Engine
 from torchjd.autojac import backward as jac_backward
 from torchjd.autojac import jac_to_grad
 
@@ -29,6 +30,20 @@ class _JDResult:
             parallel_chunk_size=self._parallel_chunk_size,
         )
         jac_to_grad(iter(self._params), self._aggregator)
+
+
+class _GramianResult:
+    """Holds the loss vector and backward context for a gramian-based JD forward pass."""
+
+    def __init__(self, losses: Tensor, engine: Engine, gramian_weighting: nn.Module):
+        self._losses = losses
+        self._engine = engine
+        self._gramian_weighting = gramian_weighting
+
+    def backward(self) -> None:
+        gramian = self._engine.compute_gramian(self._losses)
+        weights = self._gramian_weighting(gramian)
+        self._losses.backward(weights)
 
 
 class LossCombinationGDWrapper(nn.Module):
@@ -73,3 +88,29 @@ class FullJDWrapper(nn.Module):
         loss_vector = self.criterion(output, target)
         params = list(self.model.parameters())
         return _JDResult(loss_vector, params, self.aggregator, self.parallel_chunk_size)
+
+
+class GramianJDWrapper(nn.Module):
+    """
+    Module that runs a model and criterion to produce a loss vector, and returns a `_GramianResult`
+    whose `.backward()` computes the Gramian via autogram's Engine and uses a GramianWeighting to
+    produce per-loss weights for a standard weighted backward pass.
+    """
+
+    def __init__(
+        self,
+        model: nn.Module,
+        criterion: Criterion,
+        gramian_weighting: nn.Module,
+        batch_dim: int = 0,
+    ):
+        super().__init__()
+        self.model = model
+        self.criterion = criterion
+        self.gramian_weighting = gramian_weighting
+        self._engine = Engine(model, batch_dim=batch_dim)
+
+    def forward(self, x: Tensor, target: Tensor | list[Tensor]) -> _GramianResult:
+        output = self.model(x)
+        loss_vector = self.criterion(output, target)
+        return _GramianResult(loss_vector, self._engine, self.gramian_weighting)
