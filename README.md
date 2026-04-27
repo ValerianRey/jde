@@ -9,43 +9,22 @@ The installation steps are given for Linux (more specifically, they have been te
 versions of Ubuntu, Fedora and Debian) but they should be easily adaptable to work on other
 operating systems.
 1) Clone the repository
-2) Install Python 3.10.13. We use pyenv to manage python versions:
-    - Install pyenv: https://github.com/pyenv/pyenv#installation
-    - Install libraries that are required to install python with pyenv:
-      ```bash
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-      ```
-    - Install a python 3.10.13 version using pyenv:
-      ```bash
-      pyenv install 3.10.13
-      ```
-    - Automatically activate this python version when you are inside this repo (command to run from
-    the root of jde):
-      ```bash
-      pyenv local 3.10.13
-      ```
+2) Install uv, then run:
+```
+uv venv && CC=gcc uv pip install --python-version=3.10 -e . --group check
+```
 
-3) Install `uv`:
-   - Download and install uv:
-     ```bash
-     curl -LsSf https://astral.sh/uv/install.sh | sh
-     ```
-   - Restart your shell or run `source $HOME/.local/bin/env` to make `uv` available.
+For 1080 GTX gpu, run instead:
+```
+uv venv && CC=gcc uv pip install --python-version=3.10 -e . --group check --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cu126 && uv run pre-commit install
+```
 
-4) Inside the project root folder, install the dependencies:
-   ```bash
-   uv sync --frozen
-   ```
-   It should create a virtual environment in a `.venv` folder.
-
-   > 💡 The python version that you should specify in your IDE is `path_to_jde/.venv/bin/python`.
-
-5) We use Weights and Biases to monitor the runs (losses, metrics and more). In order to reproduce
+3) We use Weights and Biases to monitor the runs (losses, metrics and more). In order to reproduce
 our experiments, you have to create an account at https://wandb.ai/home. You should then create a team
 that you can name however you want, and a project that you should name "jde".
 In `src/scripts/download_study`, you have to replace "team-name" by the team name that you have chosen.
 
-6) To quickly test the install, run:
+4) To quickly test the install, run:
    ```bash
    uv run iwrm_study mnist tiny 1 --wandb-mode=online --name="test install"
    ```
