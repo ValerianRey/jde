@@ -25,24 +25,18 @@ operating systems.
       pyenv local 3.10.13
       ```
 
-3) Install `pdm`:
-   - Download and install pdm:
+3) Install `uv`:
+   - Download and install uv:
      ```bash
-     curl -sSL https://pdm.fming.dev/install-pdm.py | python3 -
+     curl -LsSf https://astral.sh/uv/install.sh | sh
      ```
-   - Make pdm accessible from your `PATH`. In your `.bashrc` file, add:
-     ```bash
-     export PATH="$PATH:$HOME/.local/bin"
-     ```
+   - Restart your shell or run `source $HOME/.local/bin/env` to make `uv` available.
 
 4) Inside the project root folder, install the dependencies:
    ```bash
-   pdm install --frozen-lockfile
+   uv sync --frozen
    ```
    It should create a virtual environment in a `.venv` folder.
-   > ⚠️ If it does not create this `.venv` folder, you can try to run `pdm venv create`, followed by
-   `pdm use .venv/bin/python`, and install the project by re-running `pdm install
-   --frozen-lockfile`.
 
    > 💡 The python version that you should specify in your IDE is `path_to_jde/.venv/bin/python`.
 
@@ -53,7 +47,7 @@ In `src/scripts/download_study`, you have to replace "team-name" by the team nam
 
 6) To quickly test the install, run:
    ```bash
-   pdm run iwrm_study mnist tiny 1 --wandb-mode=online --name="test install"
+   uv run iwrm_study mnist tiny 1 --wandb-mode=online --name="test install"
    ```
    You might see some warnings and wandb should ask for some access credentials. If it works, at
    the end, you should see the message "11/11 successful experiments".

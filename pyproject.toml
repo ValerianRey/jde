@@ -30,7 +30,7 @@ refine_lr_range = "scripts.refine_lr_range:main"
 extract_best_runs = "scripts.extract_best_runs:main"
 plot_results = "scripts.plot_results:main"
 
-[tool.pdm.dev-dependencies]
+[dependency-groups]
 check = [
-	"pre-commit>=2.9.2"  # isort doesn't work before 2.9.2
+    "pre-commit>=2.9.2",  # isort doesn't work before 2.9.2
 ]
