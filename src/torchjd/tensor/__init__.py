@@ -1,1 +1,0 @@
-from torchjd.tensor.tensor_hierarchy import TensorHierarchy

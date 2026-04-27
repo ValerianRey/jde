@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from torch import nn
 from torch.optim import SGD, Optimizer
-from torchjd.criterion import LossListCriterion, SplitTensorCriterion
 from torchmetrics import Accuracy, MetricCollection
 
 from jde.aggregators import (
@@ -15,6 +14,7 @@ from jde.aggregators import (
     weight_metrics,
 )
 from jde.architectures import ParameterizedModule
+from jde.criteria import LossListCriterion, SplitTensorCriterion
 from jde.hooks import make_criterion_hook
 from jde.loss_combiners import SqueezeCombiner
 from jde.loss_functions import NamedModule
@@ -93,7 +93,7 @@ def generate_iwrm_solutions(
     for _, (group_name, min_lr_exp, max_lr_exp) in lr_df.iterrows():
         aggregator = KEY_TO_AGGREGATOR[group_name]
 
-        if hasattr(aggregator, "weighting"):
+        if hasattr(aggregator, "weighting") or hasattr(aggregator, "gramian_weighting"):
             metrics = default_metrics
         else:
             metrics = no_weights_metrics

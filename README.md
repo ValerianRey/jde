@@ -2,13 +2,7 @@
 
 This repository contains the code to reproduce the experiments of
 [Jacobian Descent For Multi-Objective Optimization](https://arxiv.org/pdf/2406.16232).
-It uses an early version of the library [torchjd](https://github.com/TorchJD/torchjd), contained in `src/torchjd`.
-
-> [!WARNING]
-> Since this repo uses an outdated version of torchjd, it is not a good resource to start learning how to
-> use this library. For the same reason, it is not the best way to learn how to train neural networks
-> with Jacobian descent. Instead, we recommend reading the documentation of
-> [torchjd](https://github.com/TorchJD/torchjd).
+It uses the [torchjd](https://github.com/TorchJD/torchjd) library.
 
 # Installation
 The installation steps are given for Linux (more specifically, they have been tested on recent
@@ -80,7 +74,7 @@ In `src/scripts/download_study`, you have to replace "team-name" by the team nam
 
 # Usage
 
-The scripts to reproduce our experiments generally take 3 parameters: 
+The scripts to reproduce our experiments generally take 3 parameters:
 - The dataset key (`svhn`, `cifar10`, `euro_sat`, `mnist`, `fashion_mnist`, `kmnist`).
 - An int indicating the seed and the subset on which the experiment should run
 (we used `1`, `2`, `3`, `4`, `5`, `6`, `7`, and `8`).

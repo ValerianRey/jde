@@ -1,18 +1,17 @@
 # Aggregators
 from torchjd.aggregation import (
-    AlignedMTLWrapper,
-    CAGradWeighting,
-    DualProjWrapper,
-    GradDropAggregator,
-    IMTLGWeighting,
-    MeanWeighting,
-    MGDAWeighting,
-    NashMTLWeighting,
-    PCGradWeighting,
-    RandomWeighting,
-    SumWeighting,
-    UPGradWrapper,
-    WeightedAggregator,
+    IMTLG,
+    MGDA,
+    AlignedMTL,
+    CAGrad,
+    DualProj,
+    GradDrop,
+    Mean,
+    NashMTL,
+    PCGrad,
+    Random,
+    Sum,
+    UPGrad,
 )
 from torchmetrics import MeanMetric, MetricCollection
 
@@ -20,18 +19,18 @@ from jde.hooks import make_aggregator_hook, make_weighting_hook
 from jde.metrics import CosineSimilarityToMatrixMean, MultiBatchWrapper
 from jde.settings import DEVICE
 
-upgrad = WeightedAggregator(UPGradWrapper(MeanWeighting()))
-mean = WeightedAggregator(MeanWeighting())
-sum_ = WeightedAggregator(SumWeighting())
-mgda = WeightedAggregator(MGDAWeighting())
-rgw = WeightedAggregator(RandomWeighting())
-dualproj = WeightedAggregator(DualProjWrapper(MeanWeighting()))
-pcgrad = WeightedAggregator(PCGradWeighting())
-imtlg = WeightedAggregator(IMTLGWeighting())
-graddrop = GradDropAggregator()
-alignedm = WeightedAggregator(AlignedMTLWrapper(MeanWeighting()))
-nashmtl_32 = WeightedAggregator(NashMTLWeighting(n_tasks=32, optim_niter=1))
-cagrad_0_5 = WeightedAggregator(CAGradWeighting(c=0.5))
+upgrad = UPGrad()
+mean = Mean()
+sum_ = Sum()
+mgda = MGDA()
+rgw = Random()
+dualproj = DualProj()
+pcgrad = PCGrad()
+imtlg = IMTLG()
+graddrop = GradDrop()
+alignedm = AlignedMTL()
+nashmtl_32 = NashMTL(n_tasks=32, optim_niter=1)
+cagrad_0_5 = CAGrad(c=0.5)
 
 # Aggregation Metrics
 output_direction_metrics = MetricCollection({})
@@ -62,17 +61,32 @@ cagrad_0_5.register_forward_hook(_aggregator_hook)
 weight_metrics = MetricCollection({"Average": MeanMetric().to(DEVICE)})
 _weighting_hook = make_weighting_hook(weight_metrics)
 
-upgrad.weighting.register_forward_hook(_weighting_hook)
-mean.weighting.register_forward_hook(_weighting_hook)
-sum_.weighting.register_forward_hook(_weighting_hook)
-mgda.weighting.register_forward_hook(_weighting_hook)
-rgw.weighting.register_forward_hook(_weighting_hook)
-dualproj.weighting.register_forward_hook(_weighting_hook)
-pcgrad.weighting.register_forward_hook(_weighting_hook)
-imtlg.weighting.register_forward_hook(_weighting_hook)
-alignedm.weighting.register_forward_hook(_weighting_hook)
-nashmtl_32.weighting.register_forward_hook(_weighting_hook)
-cagrad_0_5.weighting.register_forward_hook(_weighting_hook)
+
+def _get_weighting(aggregator):
+    """Return the sub-module that produces per-task weights, or None if unavailable."""
+    if hasattr(aggregator, "gramian_weighting"):
+        return aggregator.gramian_weighting
+    if hasattr(aggregator, "weighting"):
+        return aggregator.weighting
+    return None
+
+
+for _agg in (
+    upgrad,
+    mean,
+    sum_,
+    mgda,
+    rgw,
+    dualproj,
+    pcgrad,
+    imtlg,
+    alignedm,
+    nashmtl_32,
+    cagrad_0_5,
+):
+    _w = _get_weighting(_agg)
+    if _w is not None:
+        _w.register_forward_hook(_weighting_hook)
 
 KEY_TO_AGGREGATOR = {
     "UPGrad Mean": upgrad,
