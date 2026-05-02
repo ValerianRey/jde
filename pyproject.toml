@@ -30,6 +30,8 @@ download_study = "scripts.download_study:main"
 refine_lr_range = "scripts.refine_lr_range:main"
 extract_best_runs = "scripts.extract_best_runs:main"
 plot_results = "scripts.plot_results:main"
+profiling_study = "scripts.profiling_study:main"
+plot_memory_timeline = "scripts.plot_memory_timeline:main"
 
 [dependency-groups]
 check = [
