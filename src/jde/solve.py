@@ -5,10 +5,9 @@ from traceback import print_exception
 import torch
 import wandb
 from secprint import SectionPrinter as Spt
-from torch import Tensor
+from torch import Tensor, nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-from torchjd.module_wrapper import ModuleWrapper
 
 from jde.metrics import Metrics
 from jde.printing import print_header, print_line
@@ -121,7 +120,7 @@ def solve(
 
 
 def _train(
-    module_wrapper: ModuleWrapper,
+    module_wrapper: nn.Module,
     dataloader: DataLoader,
     optimizer: Optimizer,
     printing_dict: dict,
@@ -153,7 +152,7 @@ def _train(
 
 @torch.no_grad()
 def _evaluate(
-    module_wrapper: ModuleWrapper,
+    module_wrapper: nn.Module,
     dataloader: DataLoader,
     printing_dict: dict,
     metrics: Metrics,

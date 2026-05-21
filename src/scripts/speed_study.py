@@ -14,10 +14,15 @@ from docopt import docopt
 from secprint import SectionPrinter as Spt
 from torch.optim import SGD
 
+from jde.aggregators import KEY_TO_GRAMIAN_WEIGHTING
 from jde.architectures import Cifar10Model, EuroSatModel, MnistModel, SVHNModel
 from jde.problems import KEY_TO_PROBLEM
 from jde.settings import RUNS_PATH
-from jde.solution_generators import generate_gd_solution, generate_iwrm_solutions
+from jde.solution_generators import (
+    generate_gd_solution,
+    generate_gram_solutions,
+    generate_iwrm_solutions,
+)
 from jde.solve import solve
 
 DATASET_KEY_TO_ARCHITECTURE = {
@@ -48,7 +53,7 @@ def main() -> None:
 
         gd_solution_generator = generate_gd_solution(architecture, 1e-5)
 
-        solutions = generate_iwrm_solutions(
+        iwrm_solutions = generate_iwrm_solutions(
             architecture=architecture,
             lr_df=lr_df,
             n_lr=1,
@@ -57,9 +62,19 @@ def main() -> None:
             optimizer_kwargs={"lr": np.nan},  # Will be overridden
         )
 
+        gram_lr_df = lr_df[lr_df["group_name"].isin(KEY_TO_GRAMIAN_WEIGHTING)]
+        gram_solutions = generate_gram_solutions(
+            architecture=architecture,
+            lr_df=gram_lr_df,
+            n_lr=1,
+            batch_size=32,
+            optimizer_class=optimizer_class,
+            optimizer_kwargs={"lr": np.nan},  # Will be overridden
+        )
+
         n_experiments = 0
         n_successes = 0
-        for solution in itertools.chain(gd_solution_generator, solutions):
+        for solution in itertools.chain(gd_solution_generator, iwrm_solutions, gram_solutions):
             n_experiments += 1
             n_successes += solve(
                 problem=problem,

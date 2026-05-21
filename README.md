@@ -2,64 +2,31 @@
 
 This repository contains the code to reproduce the experiments of
 [Jacobian Descent For Multi-Objective Optimization](https://arxiv.org/pdf/2406.16232).
-It uses an early version of the library [torchjd](https://github.com/TorchJD/torchjd), contained in `src/torchjd`.
-
-> [!WARNING]
-> Since this repo uses an outdated version of torchjd, it is not a good resource to start learning how to
-> use this library. For the same reason, it is not the best way to learn how to train neural networks
-> with Jacobian descent. Instead, we recommend reading the documentation of
-> [torchjd](https://github.com/TorchJD/torchjd).
+It uses the [torchjd](https://github.com/TorchJD/torchjd) library.
 
 # Installation
 The installation steps are given for Linux (more specifically, they have been tested on recent
 versions of Ubuntu, Fedora and Debian) but they should be easily adaptable to work on other
 operating systems.
 1) Clone the repository
-2) Install Python 3.10.13. We use pyenv to manage python versions:
-    - Install pyenv: https://github.com/pyenv/pyenv#installation
-    - Install libraries that are required to install python with pyenv:
-      ```bash
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-      ```
-    - Install a python 3.10.13 version using pyenv:
-      ```bash
-      pyenv install 3.10.13
-      ```
-    - Automatically activate this python version when you are inside this repo (command to run from
-    the root of jde):
-      ```bash
-      pyenv local 3.10.13
-      ```
+2) Install uv, then run:
+```
+uv venv && CC=gcc uv pip install --python-version=3.10 -e . --group check
+```
 
-3) Install `pdm`:
-   - Download and install pdm:
-     ```bash
-     curl -sSL https://pdm.fming.dev/install-pdm.py | python3 -
-     ```
-   - Make pdm accessible from your `PATH`. In your `.bashrc` file, add:
-     ```bash
-     export PATH="$PATH:$HOME/.local/bin"
-     ```
+For 1080 GTX gpu, run instead:
+```
+uv venv && CC=gcc uv pip install --python-version=3.10 -e . --group check --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cu126 && uv run pre-commit install
+```
 
-4) Inside the project root folder, install the dependencies:
-   ```bash
-   pdm install --frozen-lockfile
-   ```
-   It should create a virtual environment in a `.venv` folder.
-   > ⚠️ If it does not create this `.venv` folder, you can try to run `pdm venv create`, followed by
-   `pdm use .venv/bin/python`, and install the project by re-running `pdm install
-   --frozen-lockfile`.
-
-   > 💡 The python version that you should specify in your IDE is `path_to_jde/.venv/bin/python`.
-
-5) We use Weights and Biases to monitor the runs (losses, metrics and more). In order to reproduce
+3) We use Weights and Biases to monitor the runs (losses, metrics and more). In order to reproduce
 our experiments, you have to create an account at https://wandb.ai/home. You should then create a team
 that you can name however you want, and a project that you should name "jde".
 In `src/scripts/download_study`, you have to replace "team-name" by the team name that you have chosen.
 
-6) To quickly test the install, run:
+4) To quickly test the install, run:
    ```bash
-   pdm run iwrm_study mnist tiny 1 --wandb-mode=online --name="test install"
+   uv run iwrm_study mnist tiny 1 --wandb-mode=online --name="test install"
    ```
    You might see some warnings and wandb should ask for some access credentials. If it works, at
    the end, you should see the message "11/11 successful experiments".
@@ -80,7 +47,7 @@ In `src/scripts/download_study`, you have to replace "team-name" by the team nam
 
 # Usage
 
-The scripts to reproduce our experiments generally take 3 parameters: 
+The scripts to reproduce our experiments generally take 3 parameters:
 - The dataset key (`svhn`, `cifar10`, `euro_sat`, `mnist`, `fashion_mnist`, `kmnist`).
 - An int indicating the seed and the subset on which the experiment should run
 (we used `1`, `2`, `3`, `4`, `5`, `6`, `7`, and `8`).

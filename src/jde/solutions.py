@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from torch import nn
 from torch.nn import Module
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler, StepLR
 from torchjd.aggregation import Aggregator
-from torchjd.criterion import Criterion
-from torchjd.module_wrapper import FullJDWrapper, ModuleWrapper
 
 from jde.architectures import ParameterizedModule
+from jde.criteria import Criterion
 from jde.loss_combiners import LossCombiner
 from jde.metrics import Metrics
-from jde.module_wrappers import LossCombinationGDWrapper
+from jde.module_wrappers import FullJDWrapper, GramianJDWrapper, LossCombinationGDWrapper
 from jde.printing import dict_to_str
 
 
@@ -67,7 +67,7 @@ class Solution(ABC):
         return self.architecture(**self.architecture_kwargs)
 
     @abstractmethod
-    def make_wrapper(self) -> ModuleWrapper:
+    def make_wrapper(self) -> nn.Module:
         raise NotImplementedError
 
     def make_optimizer(self, model: Module) -> Optimizer:
@@ -163,7 +163,7 @@ class GradientDescentSolution(Solution):
         )
         self.loss_combiner = loss_combiner
 
-    def make_wrapper(self) -> LossCombinationGDWrapper:
+    def make_wrapper(self) -> LossCombinationGDWrapper:  # type: ignore[override]
         model = self._make_model()
         return LossCombinationGDWrapper(
             model=model, criterion=self.criterion, loss_combiner=self.loss_combiner
@@ -222,17 +222,17 @@ class JDSolution(Solution, ABC):
 
     def reset_aggregator(self):
         """
-        Aggregators and Weightings defined in torchjd are supposed to be stateless. However,
-        some of the aggregators defined in the literature are stateful, and thus rely on a reset
-        method. To handle these cases, until we have a better solution, we can simply call the reset
-        method if it exists, between each experiment.
+        Some aggregators (e.g. NashMTL) are stateful and expose a reset method. Call it between
+        experiments so state from a previous run does not bleed into the next one.
         """
 
         if hasattr(self.aggregator, "reset"):
             self.aggregator.reset()
-        if hasattr(self.aggregator, "weighting"):
-            if hasattr(self.aggregator.weighting, "reset"):
-                self.aggregator.weighting.reset()
+        for attr in ("gramian_weighting", "weighting"):
+            sub = getattr(self.aggregator, attr, None)
+            if sub is not None and hasattr(sub, "reset"):
+                sub.reset()
+                break
 
     @property
     def config(self) -> dict[str, Any]:
@@ -250,6 +250,72 @@ class JDSolution(Solution, ABC):
             self._lr_scheduler_str,
         ]
         return " - ".join(elements)
+
+
+class GramianJDSolution(Solution):
+    header_color = "cyan"
+
+    def __init__(
+        self,
+        criterion: Criterion,
+        train_batch_size: int,
+        evaluation_batch_size: int,
+        gramian_weighting: nn.Module,
+        metrics: Metrics,
+        optimizer_class: type[Optimizer],
+        optimizer_kwargs: dict,
+        architecture: type[ParameterizedModule],
+        architecture_kwargs: dict | None = None,
+        lr_scheduler_class: type[LRScheduler] | None = None,
+        lr_scheduler_kwargs: dict | None = None,
+        drop_last_batch: bool = False,
+        batch_dim: int = 0,
+    ):
+        super().__init__(
+            criterion=criterion,
+            train_batch_size=train_batch_size,
+            evaluation_batch_size=evaluation_batch_size,
+            metrics=metrics,
+            optimizer_class=optimizer_class,
+            optimizer_kwargs=optimizer_kwargs,
+            architecture=architecture,
+            architecture_kwargs=architecture_kwargs,
+            lr_scheduler_class=lr_scheduler_class,
+            lr_scheduler_kwargs=lr_scheduler_kwargs,
+            drop_last_batch=drop_last_batch,
+        )
+        self.gramian_weighting = gramian_weighting
+        self.batch_dim = batch_dim
+
+    def make_wrapper(self) -> GramianJDWrapper:  # type: ignore[override]
+        model = self._make_model()
+        return GramianJDWrapper(
+            model=model,
+            criterion=self.criterion,
+            gramian_weighting=self.gramian_weighting,
+            batch_dim=self.batch_dim,
+        )
+
+    def __str__(self) -> str:
+        elements = [
+            self._base_str,
+            str(self.gramian_weighting),
+            self._optimizer_str,
+            self._lr_scheduler_str,
+        ]
+        return " - ".join(elements)
+
+    @property
+    def config(self) -> dict[str, Any]:
+        return super().config | {
+            "gramian_weighting": str(self.gramian_weighting),
+            "gramian_weighting_repr": repr(self.gramian_weighting),
+            "batch_dim": str(self.batch_dim),
+        }
+
+    @property
+    def optimization_type(self) -> str:
+        return "GJD"
 
 
 class FullJDSolution(JDSolution):
@@ -287,7 +353,7 @@ class FullJDSolution(JDSolution):
             parallel_chunk_size=parallel_chunk_size,
         )
 
-    def make_wrapper(self) -> FullJDWrapper:
+    def make_wrapper(self) -> FullJDWrapper:  # type: ignore[override]
         self.reset_aggregator()
         model = self._make_model()
         return FullJDWrapper(
